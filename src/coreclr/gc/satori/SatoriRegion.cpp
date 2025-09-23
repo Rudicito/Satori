@@ -2051,31 +2051,50 @@ void SatoriRegion::IndividuallyPromote()
 //         the cost for being too aggressive is inability to trace byrefs concurrently,
 //         it is not huge, byref is rarely the only ref.
 //         In big quantities may hurt though.
+//         Also fitting into numerous tiny holes could be expensive.
 bool SatoriRegion::IsReuseCandidate()
 {
-    return FreeSpaceInTopNBuckets(Satori::REUSABLE_BUCKETS) > Satori::REGION_SIZE_GRANULARITY / 4;
+    // Here is a simple heuristic to decide if a region is worth reusing.
+    // it is possible to do better.
+    // Also this could be dialed if we have a size/speed knob.
+
+    // should be at most half full
+    if (Occupancy() > Satori::REGION_SIZE_GRANULARITY / 2)
+        return false;
+
+    // and need some space in large buckets, so it is not overly
+    // fragmented and more rewarding to reuse.
+    return FreeSpaceInTopNBuckets(Satori::LARGE_BUCKETS) > Satori::REGION_SIZE_GRANULARITY / 8;
 }
 
-bool SatoriRegion::IsDemotable()
+bool SatoriRegion::IsDemotionCandidate()
 {
-    if (ObjCount() > Satori::MAX_DEMOTED_OBJECTS_IN_REGION ||
-        FreeSpaceInTopNBuckets(Satori::REUSABLE_BUCKETS) < (Satori::REGION_SIZE_GRANULARITY / 8 * 7)) // TUNING:
-    {
+    if (ObjCount() > Satori::MAX_DEMOTED_OBJECTS_IN_REGION)
         return false;
-    }
 
-    return true;
+    if (Occupancy() > Satori::REGION_SIZE_GRANULARITY / 8)
+        return false;
+
+    return IsReuseCandidate();
 }
 
 // regions that were not reused or relocated for a while could be tenured.
 // unless it is a reuse candidate
 bool SatoriRegion::IsPromotionCandidate()
 {
-    // TUNING: individual promoting heuristic
+    return false;
+
+    // TODO: VS how to rationalize this?
+    //       If done aggressively, this can really hurt size, and eventually perf
+    //       especially when not relocating.
+    //       Does it actually help? When?
+    // 
     // if the region is not reusable and has not seen an allocation for 4 cycles, perhaps should tenure it
     return Generation() == 1 &&
         SweepsSinceLastAllocation() > 4 &&
-        !IsReuseCandidate();
+        Occupancy() > Satori::REGION_SIZE_GRANULARITY / 2;
+
+//        !IsReuseCandidate();
 }
 
 // we relocate regions if that would improve their reuse quality.
@@ -2118,14 +2137,14 @@ bool SatoriRegion::IsRelocationCandidate(bool assumePromotion)
         return true;
     }
 
-    // if gen2 and not demotable, then cannot reuse, consider compacting
-    if (Generation() == 2 || assumePromotion)
-    {
-        if (!IsDemotable())
-        {
-            return true;
-        }
-    }
+    //// if gen2 and not demotable, then cannot reuse, consider compacting
+    //if (Generation() == 2 || assumePromotion)
+    //{
+    //    if (!IsDemotionCandidate())
+    //    {
+    //        return true;
+    //    }
+    //}
 
     // we may be able to reuse this, do not compact.
     return false;

@@ -108,7 +108,7 @@ namespace Satori
 
     // freelist bucket contais items that fit at least 1 << (i + min_bits)
     // min freelist size is 4K+
-    static const int MIN_FREELIST_SIZE_BITS = 11;
+    static const int MIN_FREELIST_SIZE_BITS = 13;
     static const size_t MIN_FREELIST_SIZE = 1 << MIN_FREELIST_SIZE_BITS;
     static const int FREELIST_COUNT = Satori::REGION_BITS - MIN_FREELIST_SIZE_BITS;
 
