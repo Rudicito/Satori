@@ -95,48 +95,48 @@ jobs:
             artifacts/bin/coreclr/${{ matrix.target.release-name }}/libclrjit.so
             artifacts/bin/coreclr/${{ matrix.target.release-name }}/System.Private.CoreLib.dll
 
-  osx:
-    name: Build (${{ matrix.target.name }})
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        target:
-#         - name: osx-x64-debug
-#           configuration: 'Debug'
-#           build-args: '--cross -a x64'
-#           release-name: 'osx.x64.Debug'
-#         - name: osx-arm64-debug
-#           configuration: 'Debug'
-#           build-args: ''
-#           release-name: 'osx.arm64.Debug'
-          - name: osx-x64
-            configuration: 'Release'
-            build-args: '--cross -a x64'
-            release-name: 'osx.x64.Release'
-          - name: osx-arm64
-            configuration: 'Release'
-            build-args: ''
-            release-name: 'osx.arm64.Release'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build
-        run: ./build.sh clr -c ${{ matrix.target.configuration }} ${{ matrix.target.build-args }}
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.target.name }}
-          path: |
-            artifacts/bin/coreclr/${{ matrix.target.release-name }}/libcoreclr.dylib
-            artifacts/bin/coreclr/${{ matrix.target.release-name }}/libclrjit.dylib
-            artifacts/bin/coreclr/${{ matrix.target.release-name }}/System.Private.CoreLib.dll
+#  osx:
+#    name: Build (${{ matrix.target.name }})
+#    runs-on: macos-latest
+#    strategy:
+#      matrix:
+#        target:
+##         - name: osx-x64-debug
+##           configuration: 'Debug'
+##           build-args: '--cross -a x64'
+##           release-name: 'osx.x64.Debug'
+##         - name: osx-arm64-debug
+##           configuration: 'Debug'
+##           build-args: ''
+##           release-name: 'osx.arm64.Debug'
+#          - name: osx-x64
+#            configuration: 'Release'
+#            build-args: '--cross -a x64'
+#            release-name: 'osx.x64.Release'
+#          - name: osx-arm64
+#            configuration: 'Release'
+#            build-args: ''
+#            release-name: 'osx.arm64.Release'
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Build
+#        run: ./build.sh clr -c ${{ matrix.target.configuration }} ${{ matrix.target.build-args }}
+#
+#      - name: Upload
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ matrix.target.name }}
+#          path: |
+#            artifacts/bin/coreclr/${{ matrix.target.release-name }}/libcoreclr.dylib
+#            artifacts/bin/coreclr/${{ matrix.target.release-name }}/libclrjit.dylib
+#            artifacts/bin/coreclr/${{ matrix.target.release-name }}/System.Private.CoreLib.dll
 
   release:
     name: Create release
     if: github.ref_type == 'tag'
-    needs: [ windows, linux, osx ]
+    needs: [ windows, linux ]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
